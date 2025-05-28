@@ -47,9 +47,9 @@ if [ -x /usr/bin/dircolors ]; then
 fi
 
 # Aliases
-alias ll='ls -alF'
-alias la='ls -A'
-alias l='ls -CF'
+alias ll='ls -alhF'
+alias la='ls -Ah'
+alias l='ls -hCF'
 
 # Load additional aliases if exists
 if [ -f ~/.bash_aliases ]; then
@@ -87,7 +87,7 @@ alias genpass='for i in {1..5}; do tr -dc "A-Za-z0-9" </dev/urandom | head -c 20
 alias netstat='netstat -tulanp'
 alias myip='curl ifconfig.me'
 alias free='free -h -l -t'
-alias http='python3 -m http.server'
+alias http='function _pyserve() { python3 -m http.server ${1:-8000}; }; _pyserve'
 alias du='du -sh *'
 alias df='df -h'
 alias h='history'
@@ -131,11 +131,16 @@ alias kgn='kubectl get nodes'
 alias vb='vim ~/.bashrc'
 alias vz='vim ~/.zshrc'
 alias vv='vim ~/.vimrc'
+alias vt='vim ~/.tmux.conf'
 alias sb='source ~/.bashrc'
 alias sz='source ~/.zshrc'
 
 # Vim
 alias v='vim -p'
 
+# Vault environment
+export VAULT_ADDR=http://127.0.0.1:8200
+export VAULT_TOKEN="bruno.silva"
+export VAULT_TOKEN="hvs.CAESIHJs29zzJsBu_95cE88-YikKyO_aQBIKJxyepm9NBfPbGh4KHGh2cy5tMGxCWDZ6TVhSQ1Q1aXZpNFc3UXcxMXM"
 
 complete -C /usr/local/bin/vault vault
