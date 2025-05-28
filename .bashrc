@@ -139,8 +139,4 @@ alias sz='source ~/.zshrc'
 alias v='vim -p'
 
 # Vault environment
-export VAULT_ADDR=http://127.0.0.1:8200
-export VAULT_TOKEN="bruno.silva"
-export VAULT_TOKEN="hvs.CAESIHJs29zzJsBu_95cE88-YikKyO_aQBIKJxyepm9NBfPbGh4KHGh2cy5tMGxCWDZ6TVhSQ1Q1aXZpNFc3UXcxMXM"
-
 complete -C /usr/local/bin/vault vault
