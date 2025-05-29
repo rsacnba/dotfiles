@@ -1,151 +1,176 @@
-# Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
-# Initialization code that may require console input (password prompts, [y/n]
-# confirmations, etc.) must go above this block; everything else may go below.
-if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
-  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
-fi
+# Histórico
+HISTSIZE=1000
+SAVEHIST=1000
+HISTFILE=~/.zsh_history
 
-# If you come from bash you might have to change your $PATH.
-# export PATH=$HOME/bin:$HOME/.local/bin:/usr/local/bin:$PATH
+# Ativa substituição de variáveis no prompt
+setopt PROMPT_SUBST
 
-# Path to your Oh My Zsh installation.
-export ZSH="$HOME/.oh-my-zsh"
-#export TERM="xterm-kitty"
+# Ícones para Git
+GIT_BRANCH_ICON=''
+GIT_CLEAN_ICON='✓'
+GIT_DIRTY_ICON='✗'
+GIT_AHEAD_ICON='⇡'
+GIT_BEHIND_ICON='⇣'
+GIT_STASH_ICON='📦'
+PROMPT_ARROW='➜'
 
-# Set name of the theme to load --- if set to "random", it will
-# load a random theme each time Oh My Zsh is loaded, in which case,
-# to know which specific one was loaded, run: echo $RANDOM_THEME
-# See https://github.com/ohmyzsh/ohmyzsh/wiki/Themes
-# ZSH_THEME="robbyrussell"
-ZSH_THEME="dracula"
+# Função personalizada para status do Git
+git_prompt_info() {
+  local ref
+  ref=$(git symbolic-ref --short HEAD 2> /dev/null) || \
+  ref=$(git rev-parse --short HEAD 2> /dev/null) || return
 
-# Set list of themes to pick from when loading at random
-# Setting this variable when ZSH_THEME=random will cause zsh to load
-# a theme from this variable instead of looking in $ZSH/themes/
-# If set to an empty array, this variable will have no effect.
-# ZSH_THEME_RANDOM_CANDIDATES=( "robbyrussell" "agnoster" )
+  local dirty=""
+  if ! git diff --quiet --ignore-submodules HEAD 2>/dev/null; then
+    dirty="%F{red}$GIT_DIRTY_ICON%f"
+  else
+    dirty="%F{green}$GIT_CLEAN_ICON%f"
+  fi
 
-# Uncomment the following line to use case-sensitive completion.
-# CASE_SENSITIVE="true"
+  local ahead_behind=""
+  if git rev-parse --abbrev-ref @{upstream} &>/dev/null; then
+    local ahead=$(git rev-list --count @{upstream}..HEAD 2>/dev/null)
+    local behind=$(git rev-list --count HEAD..@{upstream} 2>/dev/null)
+    [[ "$ahead" -gt 0 ]] && ahead_behind+=" %F{cyan}$GIT_AHEAD_ICON$ahead%f"
+    [[ "$behind" -gt 0 ]] && ahead_behind+=" %F{cyan}$GIT_BEHIND_ICON$behind%f"
+  fi
 
-# Uncomment the following line to use hyphen-insensitive completion.
-# Case-sensitive completion must be off. _ and - will be interchangeable.
-# HYPHEN_INSENSITIVE="true"
+  local stash=""
+  if git rev-parse --verify --quiet refs/stash &>/dev/null; then
+    stash+=" %F{blue}$GIT_STASH_ICON%f"
+  fi
 
-# Uncomment one of the following lines to change the auto-update behavior
-# zstyle ':omz:update' mode disabled  # disable automatic updates
-# zstyle ':omz:update' mode auto      # update automatically without asking
-# zstyle ':omz:update' mode reminder  # just remind me to update when it's time
+  echo " (%F{magenta}$GIT_BRANCH_ICON $ref%f$dirty$ahead_behind$stash)"
+}
 
-# Uncomment the following line to change how often to auto-update (in days).
-# zstyle ':omz:update' frequency 13
+# Prompt personalizado
+PROMPT='%F{blue}%~%f$(git_prompt_info) %F{green}$PROMPT_ARROW%f '
 
-# Uncomment the following line if pasting URLs and other text is messed up.
-# DISABLE_MAGIC_FUNCTIONS="true"
+# Configuração do prompt minimalista para zsh
+# setopt PROMPT_SUBST
 
-# Uncomment the following line to disable colors in ls.
-# DISABLE_LS_COLORS="true"
+# Define o prompt:
+# - Para usuários normais: "PWD% "
+# - Para root: "PWD# "
+# PROMPT='%~ %# '
 
-# Uncomment the following line to disable auto-setting terminal title.
-# DISABLE_AUTO_TITLE="true"
+# Explicação dos códigos:
+# %~  = Diretório atual (com ~ para HOME)
+# %#  = % (usuário normal) ou # (root)
+# %F{cor} / %f = Cor do texto / reset
+# %B / %b = Negrito / reset
 
-# Uncomment the following line to enable command auto-correction.
-# ENABLE_CORRECTION="true"
+# Custom Aliases (preserved from original)
+### Navegation 
+alias ls='ls --color=auto'
+alias ll='ls -alFth'
+alias la='ls -A'
+alias l='ls -CF'
 
-# Uncomment the following line to display red dots whilst waiting for completion.
-# You can also set it to another string to have that shown instead of the default red dots.
-# e.g. COMPLETION_WAITING_DOTS="%F{yellow}waiting...%f"
-# Caution: this setting can cause issues with multiline prompts in zsh < 5.7.1 (see #5765)
-# COMPLETION_WAITING_DOTS="true"
+### Find
+alias grep='grep --color=auto'
+alias fgrep='fgrep --color=auto'
+alias egrep='egrep --color=auto'
 
-# Uncomment the following line if you want to disable marking untracked files
-# under VCS as dirty. This makes repository status check for large repositories
-# much, much faster.
-# DISABLE_UNTRACKED_FILES_DIRTY="true"
+### Rsync
+alias rsync='rsync -avzP'
 
-# Uncomment the following line if you want to change the command execution time
-# stamp shown in the history command output.
-# You can set one of the optional three formats:
-# "mm/dd/yyyy"|"dd.mm.yyyy"|"yyyy-mm-dd"
-# or set a custom format using the strftime function format specifications,
-# see 'man strftime' for details.
-# HIST_STAMPS="mm/dd/yyyy"
+### VPN
+alias startfwhuge='sudo systemctl start openvpn@client-fwhuge'
+alias stopfwhuge='sudo systemctl stop openvpn@client-fwhuge'
+alias startpfsensespo='sudo systemctl start openvpn@client-pfsense-spo'
+alias stoppfsensespo='sudo systemctl stop openvpn@client-pfsense-spo'
 
-# Would you like to use another custom folder than $ZSH/custom?
-# ZSH_CUSTOM=/path/to/new-custom-folder
-
-# Which plugins would you like to load?
-# Standard plugins can be found in $ZSH/plugins/
-# Custom plugins may be added to $ZSH_CUSTOM/plugins/
-# Example format: plugins=(rails git textmate ruby lighthouse)
-# Add wisely, as too many plugins slow down shell startup.
-plugins=(git docker ansible terraform ubuntu)
-ZSH_THEME="powerlevel10k/powerlevel10k"
-
-source $ZSH/oh-my-zsh.sh
-
-# User configuration
-
-# export MANPATH="/usr/local/man:$MANPATH"
-
-# You may need to manually set your language environment
-# export LANG=en_US.UTF-8
-
-# Preferred editor for local and remote sessions
-# if [[ -n $SSH_CONNECTION ]]; then
-#   export EDITOR='vim'
-# else
-#   export EDITOR='nvim'
-# fi
-
-# Compilation flags
-# export ARCHFLAGS="-arch $(uname -m)"
-
-# Set personal aliases, overriding those provided by Oh My Zsh libs,
-# plugins, and themes. Aliases can be placed here, though Oh My Zsh
-# users are encouraged to define aliases within a top-level file in
-# the $ZSH_CUSTOM folder, with .zsh extension. Examples:
-# - $ZSH_CUSTOM/aliases.zsh
-# - $ZSH_CUSTOM/macos.zsh
-# For a full list of active aliases, run `alias`.
-#
-# Example aliases
-# alias zshconfig="mate ~/.zshrc"
-# alias ohmyzsh="mate ~/.oh-my-zsh"
-
-# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
-[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
-
-#bindkey -s '\ev' 'vim \n'
-
-autoload -U +X bashcompinit && bashcompinit
-#complete -o nospace -C /usr/sbin/vault vault
-#complete -o nospace -C /usr/local/bin/terraform terraform
-
-#eval "$(ssh-agent -s)" > /dev/null
-#ssh-add ~/.ssh/id_ed25519 2>/dev/null
-
-# ZSH
-alias sz="source ~/.zshrc"
-alias v="vim"
-
-# Pesquisa
-alias grep="grep --color=auto"
-
-# Rede
-alias myip="curl ifconfig.me"
-
-# VPN
-alias startfwhuge="sudo systemctl start openvpn@client-fwhuge"
-alias stopfwhuge="sudo systemctl stop openvpn@client-fwhuge"
-alias startpfsensespo="sudo systemctl start openvpn@client-pfsense-spo"
-alias stoppfsensespo="sudo systemctl stop openvpn@client-pfsense-spo"
-
-# Convert uppercase/lowercase
+### Text conversion
 alias lowercase='function _tolower() { echo "$1" | tr "[:upper:]" "[:lower:]"; }; _tolower'
 alias uppercase='function _toupper() { echo "$1" | tr "[:lower:]" "[:upper:]"; }; _toupper'
 
-# Password generator
+### Password generator
 alias genpass='for i in {1..5}; do tr -dc "A-Za-z0-9" </dev/urandom | head -c 20; echo; done'
 
+### System monitoring
+alias netstat='netstat -tulanp'
+alias myip='curl ifconfig.me'
+alias free='free -h -l -t'
+alias http='function _pyserve() { python3 -m http.server ${1:-8000}; }; _pyserve'
+alias du='du -sh *'
+alias df='df -h'
+alias h='history'
+alias c='clear'
+alias mkdir='mkdir -pv'
+alias psmem='ps auxf | sort -nr -k 4'
+alias pscpu='ps auxf | sort -nr -k 3'
+alias ping='ping -c 5'
+alias sshkey='cat ~/.ssh/id_ed25519.pub'
+alias sshkeynopass='cat ~/.ssh/id_ed25519_nopass.pub'
+alias iptables='sudo iptables -L -v -n --line-numbers'
+alias tail='tail -f'
+alias topcpu='ps -eo pcpu,pid,user,args | sort -k 1 -r | head -10'
+alias topmem='ps -eo pmem,pid,user,args | sort -k 1 -r | head -10'
+alias logerrors='journalctl -p 3 -xb'
 
+### Git
+alias gs='git status'
+alias ga='git add'
+alias gc='git commit -m'
+alias gp='git push'
+alias gpl='git pull'
+alias gb='git branch'
+alias gco='git checkout'
+alias gl='git log --oneline --graph'
+
+### Docker/Kubernetes
+alias d='docker'
+alias dps='docker ps'
+alias dpsa='docker ps -a'
+alias di='docker images'
+alias drm='docker rm'
+alias drmi='docker rmi'
+alias dlog='docker logs -f'
+alias k='kubectl'
+alias kgp='kubectl get pods'
+alias kgs='kubectl get services'
+alias kgn='kubectl get nodes'
+
+### Config files
+alias vb='vim ~/.bashrc'
+alias vz='vim ~/.zshrc'
+alias vv='vim ~/.vimrc'
+alias vt='vim ~/.tmux.conf'
+alias sb='source ~/.bashrc'
+alias sz='source ~/.zshrc'
+
+### Vim
+alias v='vim -p'
+
+### Use modern completion system
+autoload -Uz compinit
+compinit
+
+zstyle ':completion:*' auto-description 'specify: %d'
+zstyle ':completion:*' completer _expand _complete _correct _approximate
+zstyle ':completion:*' format 'Completing %d'
+zstyle ':completion:*' group-name ''
+zstyle ':completion:*' menu select=2
+eval "$(dircolors -b)"
+zstyle ':completion:*:default' list-colors ${(s.:.)LS_COLORS}
+zstyle ':completion:*' list-colors ''
+zstyle ':completion:*' list-prompt %SAt %p: Hit TAB for more, or the character to insert%s
+zstyle ':completion:*' matcher-list '' 'm:{a-z}={A-Z}' 'm:{a-zA-Z}={A-Za-z}' 'r:|[._-]=* r:|=* l:|=*'
+zstyle ':completion:*' menu select=long
+zstyle ':completion:*' select-prompt %SScrolling active: current selection at %p%s
+zstyle ':completion:*' use-compctl false
+zstyle ':completion:*' verbose true
+
+zstyle ':completion:*:*:kill:*:processes' list-colors '=(#b) #([0-9]#)*=0=01;31'
+zstyle ':completion:*:kill:*' command 'ps -u $USER -o pid,%cpu,tty,cputime,cmd'
+<<<<<<< HEAD
+=======
+
+# Created by `pipx` on 2025-05-30 06:18:40
+export PATH="$PATH:/home/bruno-silva/.local/bin"
+
+#autoload -U +X bashcompinit && bashcompinit
+#complete -o nospace -C /usr/sbin/vault vault
+>>>>>>> fd495ac (adding changes)
